@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# SENT, RECEIVED, FAILED, REPORT
+status=$1
+
+# chemin vers le fichier contenant le message.
+msg_file=$2
+
+# id du SMS envoyé, utile pour le status report.
+sms_id=$3
+
+# log des évènements.
+echo "$1|$2|$3" >> /mnt/flash/eventhandler
+
+
+# définition du nouveau nom de fichier.
+now=$(date +%Y%m%d%H%M%S-%N)
+filename="$now.$status" 
+
+# copie du fichier message dans un répertoire à destination de l'EAI.
+cp $2 "/mnt/flash/eai/$filename"

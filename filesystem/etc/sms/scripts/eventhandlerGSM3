@@ -1,0 +1,76 @@
+#!/bin/sh
+#SCRIPT: 	Event handler SMS
+#AUTHOR: 	Davide Cantaluppi
+#DATE: 		20.05.13
+#REV: 		1
+#PLATFORM: 	Not platform dependent
+#PURPOSE:	Handle event linked to smsd daemon
+#
+#Useful Variables are
+#
+# $1
+# $2
+# $3
+#
+#Values associated to these variables are
+#
+# $1 is the type of the event wich can be SENT, RECEIVED, FAILED or REPORT.
+# $2 is the filename of the sms.
+# $3 is the message id. Only used for SENT messages with status report.
+#
+#BEGIN SCRIPT
+/etc/sms/scripts/eventhandler $1 $2 $3
+#
+#UNCOMMENT THIS LINES TO ACTIVATE MYSMS MODULE (MYSQL CLIENT)
+#if [ "$1" = "RECEIVED" ]; then
+#/etc/sms/scripts/mysql_parser.php
+#fi
+#
+#UNCOMMENT THIS IF CLAUSE AND ITS CONTENT TO ACTIVATE FORWARDING VIA EMAIL (CHOOSE YOUR SERVER METHOD)
+#if [ "$1" = "RECEIVED" ]; then
+#	. /mnt/flash/root/conf/smtp.conf
+	#if [ "$FORWARDSMS" = "YES" ]; then
+		## Use this to test with static settings and auth login
+		#/etc/mailsend/mailsend -port 2525  -auth-login -user USERNAME -pass PASSWORD -d kdev.it -smtp www.kdev.it -t kanta@kdev.it -f davide@cantaluppi.it +cc +bc -sub "SMS SMS RECEIVED" < $2
+		#
+		#For GMAIL use authentication as :  -starttls -auth-plain -user USERNAME -pass 'PASSWORD'
+		#
+		#NO AUTH - OPEN RELAY ON MAILSERVER
+		#/etc/mailsend/mailsend -port 25 -d $DOMAIN -smtp $SMTP -t $TO -f $FROM +cc +bc -sub "SMS $2 $SUBJECT" < $2
+		#/etc/mailsend/smstomail "$2" "$1"
+	#fi
+#fi
+#
+#Enable this to activate custom events
+#
+if [ "$1" = "RECEIVED" ]; then
+/mnt/flash/root/source/custom/custom_rx "$2"
+fi
+#
+#Save messages in XML format
+#if [ "$1" = "RECEIVED" ]; then
+#/etc/sms/scripts/sms2xml $1 $2 $3
+#fi
+#
+#NEVER DISABLE THE FOLLOWING SCRIPT FOR MESSAGE RECEIVING
+if [ "$1" = "RECEIVED" ]; then
+	/etc/sms/scripts/parserGSM3.php $2
+beep -f 5000 -l 100
+fi
+#
+#
+#NEVER DISABLE THE FOLLOWING SCRIPT FOR MESSAGE OUTGOING
+if [ "$1" = "SENT" ]; then
+	/etc/sms/scripts/outGSM3.php $2
+fi
+#
+#Event on failed message
+if [ "$1" = "FAILED" ]; then
+	/etc/sms/scripts/fail.php $2
+fi
+#
+#This is the custom script written by user for TX action
+if [ "$1" = "SENT" ]; then
+/mnt/flash/root/source/custom/custom_tx "$2"
+fi
+#
